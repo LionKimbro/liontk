@@ -24,22 +24,35 @@ These are all the things that I want to do underneath the umbrella of this proje
 
 ## <a name="liontk">liontk</a>
 
-(CODE NOT UPLOADED YET)
-
 This is code... probably a framework, ... for working with tcl/tk code.
 It works according to my fairly peculiar Python programming style, which is odd, but in accordance with my Philosophy.
 
+status:
+* I've uploaded the basic code, but it needs to be "productized" a bit, before it's fit for general consompution.
+* "Productizing" here means:
+	* It requires some documentation about some of the -- very atypical today -- programming patterns it makes use of.  (In fact, I think I need to create a general website about the programming ideas and patterns that I am exploring and making use of.)
+	* It requires a conventional API documentation of core functionality.
+	* It requires instructions about how to install and configure.
+
 ## <a name="liontkcomposer">liontkcomposer</a>
 
-(CODE NOT UPLOADED YET)
+`tkcomposer` lets you write tcl/tk code directly in an edit window, and get automatic updates on what is produced on the side.
 
-This is "done."  Or at least, the basic code is working, and it's fully functional.
+Here's a screenshot:
 
-It lets you write tcl/tk code directly in an edit window, and get automatic updates on what is produced on the side.
+![Simple tkcomposer Screenshot](img/2021-10-23_example-simple.png)
+
+[(You can see more screenshots in this linked gallary that I made.)](d:/repo/liontk/articles/2021-10-23_tkcomposer-example-screenshots.md)
 
 While there are features that I would like to add (specifically, a button or command that pops out your GUI into a toplevel window,) it is able to do the core functionality, and do it well.
 
 It also features a menu full of example code, so you can select the code for a widget, insert it, and just edit it in the edit pane.  It dramatically speeds up development, because you don't have to look up options, unless they are unusual or weird ones.  Not all of the examples are written yet -- just most of them.
+
+status:
+* This is done and uploaded.  It's fully usable.
+* Just download the git repository, step into the `tkcomposer/` directory, and run `python go.py`.
+* Select "Insert | Frame" from the menu, and then "Insert | Button" or "Insert | Label", and away you go.
+
 
 ## <a name="liontkref">liontkref</a>
 

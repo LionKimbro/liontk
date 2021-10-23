@@ -61,6 +61,7 @@ menu .m
 .m.m1 add command -label {Menu} -underline 0 -command ::ins_menu
 .m.m1 add command -label {Example} -underline 1 -command ::ins_example
 .m.m1 add command -label {Example 2} -underline 8 -command ::ins_example2
+.m.m1 add command -label {Example 3} -underline 8 -command ::ins_example3
 .m.m1 add command -label {Style} -underline 0 -command ::ins_style
 
 .editor configure -menu .m
@@ -228,6 +229,77 @@ grid $top.f.items.lbl3  -row 2 -column 0 -sticky ne -pady "5 0"
 grid $top.f.items.desc -row 2 -column 1 -sticky nsew -pady "5 0"
 """
 
+txt_example3 = """
+ttk::frame $top.f -padding 5 -relief raised
+grid $top.f -row 0 -column 0 -sticky nsew
+
+ttk::frame $top.f.buttons -border 5 -relief raised
+grid $top.f.buttons -row 0 -column 0 -sticky nsew
+
+ttk::button $top.f.buttons.btn -text "This is a test."
+ttk::button $top.f.buttons.btn2 -text "This is another test."
+ttk::button $top.f.buttons.btn3 -text "More"
+ttk::button $top.f.buttons.btn4 -text "Buttons"
+grid $top.f.buttons.btn -row 0 -column 0 -sticky nsew
+grid $top.f.buttons.btn2 -row 1 -column 0 -sticky nsew
+grid $top.f.buttons.btn3 -row 2 -column 0 -sticky nsew
+grid $top.f.buttons.btn4 -row 3 -column 0 -sticky nsew
+
+tk::canvas $top.f.buttons.c -width 100 -height 150
+grid $top.f.buttons.c -row 4 -column 0 -sticky n
+
+set c $top.f.buttons.c
+
+$c create rectangle 10.0 10.0 30.0 30.0 -disabledwidth 0 -tags {Rectangle obj x}
+$c create rectangle 40.0 10.0 60.0 30.0 -disabledwidth 0 -tags {Rectangle obj y}
+$c create rectangle 70.0 10.0 90.0 30.0 -disabledwidth 0 -tags {Rectangle obj z}
+$c create rectangle 10.0 40.0 30.0 60.0 -disabledwidth 0 -tags {Rectangle obj a}
+$c create rectangle 40.0 40.0 60.0 60.0 -disabledwidth 0 -tags {Rectangle obj b}
+$c create rectangle 70.0 40.0 90.0 60.0 -disabledwidth 0 -tags {Rectangle obj c}
+$c create rectangle 10.0 70.0 30.0 90.0 -disabledwidth 0 -tags {Rectangle obj n1}
+$c create rectangle 40.0 70.0 60.0 90.0 -disabledwidth 0 -tags {Rectangle obj n2}
+$c create rectangle 70.0 70.0 90.0 90.0 -disabledwidth 0 -tags {Rectangle obj n3}
+$c create text 20.0 20.0 -font {Arial 10 {}} -text X -tags {text obj txtx}
+$c create text 50.0 20.0 -font {Arial 10 {}} -text Y -tags {text obj txty}
+$c create text 80.0 20.0 -font {Arial 10 {}} -text Z -tags {text obj txtz}
+$c create text 20.0 50.0 -font {Arial 10 {}} -text A -tags {text obj txta}
+$c create text 50.0 50.0 -font {Arial 10 {}} -text B -tags {text obj txtb}
+$c create text 80.0 50.0 -font {Arial 10 {}} -text C -tags {text obj txtc}
+$c create text 20.0 80.0 -font {Arial 10 {}} -text 1 -tags {text obj txtn1}
+$c create text 50.0 80.0 -font {Arial 10 {}} -text 2 -tags {text obj txtn2}
+$c create text 80.0 80.0 -font {Arial 10 {}} -text 3 -tags {text obj txtn3}
+
+$c itemconfigure y -fill lightgreen
+$c itemconfigure c -fill cyan
+$c itemconfigure n1 -fill yellow
+
+
+tk::canvas $top.f.c -width 350 -height 280
+grid $top.f.c -row 0 -column 1 -sticky nsew
+
+grid rowconfigure $top.f 0 -weight 0
+
+set c $top.f.c
+$c create text 40.0 80.0 -anchor w -font {Arial 12 {}} -text {Create graphics with Tkpaint 2.0,
+save the graphic to a tcl file,
+and then copy the tcl code here
+to create logical graphical elements
+in your Canvas.} -tags {text obj utag6}
+$c create oval 80.0 160.0 120.0 200.0 -disabledwidth 0 -fill #c0c0c0 -width 2.0 -tags {Circle obj leftmost}
+$c create oval 200.0 160.0 240.0 200.0 -disabledwidth 0 -fill #c0c0c0 -width 2.0 -tags {Circle obj middle}
+$c create oval 280.0 120.0 320.0 160.0 -disabledwidth 0 -fill #c0c0c0 -width 2.0 -tags {Circle obj higher}
+$c create oval 280.0 200.0 320.0 240.0 -disabledwidth 0 -fill #c0c0c0 -width 2.0 -tags {Circle obj lower}
+$c create line 120.0 180.0 200.0 180.0 -arrow last -arrowshape {14 17 5} -joinstyle miter -width 2.0 -tags {Line obj utag18}
+$c create line 240.0 180.0 280.0 140.0 -arrow last -arrowshape {14 17 5} -joinstyle miter -width 2.0 -tags {Line obj utag20}
+$c create line 240.0 180.0 280.0 220.0 -arrow last -arrowshape {14 17 5} -joinstyle miter -width 2.0 -tags {Line obj utag21}
+
+$c xview moveto 0.1
+$c yview moveto 0.0
+
+
+$c itemconfigure lower -fill white
+"""
+
 txt_style = """
 ttk::style configure Japanese.TButton -font "helvetica 12"
 """
@@ -249,6 +321,7 @@ def setup():
     gui.mkcmd("ins_basicsetup", lambda: insert(txt_basicsetup))
     gui.mkcmd("ins_example", lambda: insert(txt_example))
     gui.mkcmd("ins_example2", lambda: insert(txt_example2))
+    gui.mkcmd("ins_example3", lambda: insert(txt_example3))
     gui.mkcmd("ins_style", lambda: insert(txt_style))
 
 def open_up():
