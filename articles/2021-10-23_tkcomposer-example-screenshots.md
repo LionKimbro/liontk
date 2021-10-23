@@ -43,6 +43,8 @@ I drew them in [tkpaint,](https://www.samyzaf.com/tkpaint.zip) which can save to
 
 ## Using the Snippets Library
 
+![Illustration of Snippets Insertion Library](../img/2021-10-23_the-insert-menu.png)
+
 You don't have to start from scratch!
 
 There's an embedded snippets library.
