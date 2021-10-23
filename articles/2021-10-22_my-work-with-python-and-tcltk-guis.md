@@ -43,7 +43,8 @@ There are far more ideas in this communication, than just that, but if you need 
 * <a name="articles">Related Articles by me</a>
 	* [tkinter Direct Injection](https://github.com/LionKimbro/lions_internet_office/blob/main/2021/users/lion/entries/2021-09-18_tkinter-direct.md) -- my initial notes on how to perform direct tcl/tk injection from Python
 	* [Lion's Programming Philosophy](https://github.com/LionKimbro/lions_internet_office/blob/main/2021/users/lion/entries/2021-09-06_programming-philosophy.md) -- my programming philosophy, broadly
-
+* <a name="articles">Related Websites</a>
+    * [Modern Tk Best Practices](https://tkdocs.com/) -- aka "tkdocs.com" -- the best reference and tutorial for making modern GUIs with Tcl/Tk, or with Tcl/Tk via Python, Ruby, or Perl
 
 ## <a name="beginning">The Beginning</a>
 
