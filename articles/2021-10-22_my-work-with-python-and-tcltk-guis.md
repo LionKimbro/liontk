@@ -57,7 +57,7 @@ I found myself gravitating towards raw tcl/tk.  I realized more and more, "I thi
 
 Let me contextualize that sentence for a moment:
 
-There's a "triangle" I use, when I think about GUIs, based around three points of access to a GUI.  I'll call it "Lion's GUI Triangle."  If somebody somewhere has formalized this concept before, let me know about it -- I love citing things.  But for the time being, here's my conceptualization:
+There's a <a name="triangle">"triangle"</a> I use, when I think about GUIs, based around three points of access to a GUI.  I'll call it "Lion's GUI Triangle."  If somebody somewhere has formalized this concept before, let me know about it -- I love citing things.  But for the time being, here's my conceptualization:
 
 * a GUI as it appears in a GUI editor  -- paradigmatic example: [HyperCard](https://en.wikipedia.org/wiki/HyperCard)
 * a GUI as represented in a memory structure  -- consider: an XML file representing a GUI  
