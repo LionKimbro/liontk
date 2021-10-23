@@ -42,7 +42,7 @@ Here's a screenshot:
 
 ![Simple tkcomposer Screenshot](img/2021-10-23_example-simple.png)
 
-[(You can see more screenshots in this linked gallary that I made.)](d:/repo/liontk/articles/2021-10-23_tkcomposer-example-screenshots.md)
+[(You can see more screenshots in this linked gallary that I made.)](articles/2021-10-23_tkcomposer-example-screenshots.md)
 
 While there are features that I would like to add (specifically, a button or command that pops out your GUI into a toplevel window,) it is able to do the core functionality, and do it well.
 
