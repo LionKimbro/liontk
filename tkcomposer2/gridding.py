@@ -38,54 +38,32 @@ for the widgets.
 """
 
 from symbols import *
+
+import lineparsing
+from lineparsing import has, val
+
 import tree
 
 
-g = {LN: None,  # present line, reading
-     LNNO: None,  # present line number, reading
-     NODE: None}  # the node working with
-
-parts = {}  # parts read out from ln_split_parts
-
-
-def has(k, i):
-    """Return whether there is an i'th item for key k in PARTS."""
-    return i < len(parts[k])
-
-def val(k, i):
-    """Return the i'th item for key k in PARTS."""
-    return parts[k][i]
-
-
-def first_word(ln):
-    L = ln.split(None, 1)
-    return L[0] if L else None
-
-def widgets_in_order():
-    """Identify the widgets, in their order, in the text area presently"""
-    import gui
-    return [first_word(ln) for ln in gui.text_get().split("\n")]
+g = {NODE: None}  # the node working with
 
 
 def populate():
     """Populate the gridding text area, (cued,) with the widget names."""
     import gui
-    L = ["" if n is None else n[ID] for n in tree.grouped_order()]
+    L = ["" if n is None else n[ID] for n in tree.peers_order()]
     gui.text_set("\n".join(L)+"\n")
 
 
 def node_locate():
-    word = first_word(g[LN])
-    for n in tree.all_nodes:
-        if n[ID] == word:
-            g[NODE] = n
-            return True
+    if has(TEXT, 0):
+        word = val(TEXT, 0)
+        for n in tree.all_nodes:
+            if n[ID] == word:
+                g[NODE] = n
+                return True
     g[NODE] = None
     return False
-
-def ln_split_parts():
-    parts.clear()
-    parts.update(tree.ln_split_parts_basic(g[LN]))
 
 def parse_rowcol():
     if has('[]', 0):
@@ -104,23 +82,38 @@ def parse_sticky():
         g[NODE][STICKY] = val('{}', 0)
 
 def parse_line():
-    if not g[LN].strip():
-        return
     if not node_locate():
         return
-    ln_split_parts()
     parse_rowcol()
     parse_span()
     parse_sticky()
 
 
 def readlines(s):
-    for g[LNNO], g[LN] in enumerate(s.split("\n")):
-        parse_line()
+    lineparsing.parse(s, parse_line)
 
 
-#def generate():
-#    import gui
-#    L = []
-#    for n in widgets_in_order():
-        
+
+def generate():
+    import gui
+    L = []
+    for (i,n) in enumerate(tree.peers_order()):
+        if n is None:
+            L.append("")
+            continue
+        words = ["grid", n[ID]]
+        if n[ROW]:
+            words += ["-row", n[ROW]]
+        if n[COL]:
+            words += ["-column", n[COL]]
+        if n[ROWSPAN]:
+            words += ["-rowspan", n[ROWSPAN]]
+        if n[COLSPAN]:
+            words += ["-columnspan", n[COLSPAN]]
+        if n[STICKY]:
+            words += ["-sticky", n[STICKY]]
+        s = " ".join(words)
+        L.append(s)
+    print()
+    print("\n".join(L))
+

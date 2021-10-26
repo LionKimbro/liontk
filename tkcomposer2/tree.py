@@ -76,13 +76,12 @@ The data for the tree is kept within an indexed tree like so:
 
 from symbols import *
 
+import lineparsing
+from lineparsing import has, val
 
-g = {LN: "",  # working memory for line interpretation and manipulation
-     LNNO: None,  # line number working on
-     NODE: None,  # node presently constructing (via node_create)
+
+g = {NODE: None,  # node presently constructing (via node_create)
      NEXTID: 1}
-
-parts = {}  # parts read out from ln_split_parts
 
 S = []  # stack of nodes at levels last seen
 
@@ -120,9 +119,7 @@ read_types = {
 
 
 def reset():
-    g[LN] = None
     g[NODE] = None
-    parts.clear()
     del S[:]
     all_nodes[:] = []
     g[NEXTID] = 1
@@ -130,8 +127,8 @@ def reset():
 def node_create():
     """Create a new, blank node."""
     g[NODE] = {  # these are listed in order of parsing
-        LN: g[LN],
-        LNNO: g[LNNO],
+        LN: lineparsing.g[LN],
+        LNNO: lineparsing.g[LNNO],
         DEPTH: None,      # int, levels deep
         PARENT: None,     # dict, for parent node of this node
         CHILDREN: [],     # list of dict, for child nodes of this node
@@ -158,8 +155,8 @@ def node_create():
 def toplevel_nodes():
     return [n for n in all_nodes if n[PARENT] is None]
 
-def grouped_order():
-    """Return the nodes in sets.
+def peers_order():
+    """Return the nodes in sets of peers.
     
     The space between sets is noted with None.
     """
@@ -185,49 +182,9 @@ def last_non_scrollbar():
     return None
 
 
-def ln_split_parts_basic(s):  # adapted from snippets: SPRT
-    qmarks = '<> "" {} [] () 「」 『』'.split()
-    D = {k: [] for k in qmarks}
-    qmarks_open = {qm[0]: qm for qm in qmarks}
-    qmarks_close = {qm[1]: qm for qm in qmarks}
-    s_rstrip = s.rstrip()
-    s = s_rstrip.lstrip()
-    D[INDENT] = len(s_rstrip)-len(s)
-    D[TEXT] = []
-    state = TEXT
-    escaping = False
-    acc = []
-    for ch in s:
-        if escaping == True:
-            acc.append(ch)
-            escaping = False
-        else:
-            if ch == "\\":
-                escaping = True
-                continue  # jump back to the for ch...
-            elif ((ch in qmarks_open and state == TEXT) or
-                  (ch in qmarks_close and state == qmarks_close[ch])):
-                x = "".join(acc).strip()
-                if x or (state != TEXT):  # note empty entries for non-TEXT
-                    D[state].append(x)
-                del acc[:]
-                state = qmarks_open[ch] if state == TEXT else TEXT
-            else:
-                acc.append(ch)
-    if state == TEXT:
-        x = "".join(acc).strip()
-        if x:
-            D[TEXT].append(x)
-    return D
-
-def ln_split_parts():
-    parts.clear()
-    parts.update(ln_split_parts_basic(g[LN]))
-
-
 def parse_depth():
     """Parse out depth."""
-    g[NODE][DEPTH] = parts[INDENT] // 2
+    g[NODE][DEPTH] = lineparsing.parts[INDENT] // 2
 
 def parse_parent():
     """Parse parent.
@@ -247,14 +204,6 @@ def parse_parent():
             n[PARENT][CHILDREN].append(n)
             del S[my_level:]
             S.append(g[NODE])
-
-def has(k, i):
-    """Return whether there is an i'th item for key k in PARTS."""
-    return i < len(parts[k])
-
-def val(k, i):
-    """Return the i'th item for key k in PARTS."""
-    return parts[k][i]
 
 
 def assigned_name():
@@ -319,10 +268,7 @@ def parse_raw():
 
 def parse_line():
     """Parse g[LN] for all details about g[NODE]."""
-    if not g[LN].strip():
-        return  # blank line; ignore
     node_create()
-    ln_split_parts()
     parse_depth()
     parse_parent()
     parse_name()
@@ -333,11 +279,9 @@ def parse_line():
     if g[NODE][TEXT] and g[NODE][TYPE] == FRAME:  # convenience hack
         g[NODE][TYPE] = LABEL
 
-
 def readlines(s):
     reset()
-    for g[LNNO], g[LN] in enumerate(s.split("\n")):
-        parse_line()
+    lineparsing.parse(s, parse_line)
 
 
 def populate_tree():
@@ -392,30 +336,30 @@ def generate():
         elif n[TYPE] == LABELFRAME:
             words = ["ttk::labelframe", n[ID]]
             if n[TEXT]:
-                words.extend(["-text", gui.quote(n[TEXT])])
+                words += ["-text", gui.quote(n[TEXT])]
         elif n[TYPE] == LABEL:
             words = ["ttk::label", n[ID]]
             if n[TEXT]:
-                words.extend(["-text", gui.quote(n[TEXT])])
+                words += ["-text", gui.quote(n[TEXT])]
         elif n[TYPE] == BUTTON:
             words = ["ttk::button", n[ID]]
             if n[TEXT]:
-                words.extend(["-text", gui.quote(n[TEXT])])
+                words += ["-text", gui.quote(n[TEXT])]
             if n[VAR]:
-                words.extend(["-command", n[VAR]])
+                words += ["-command", n[VAR]]
         elif n[TYPE] == ENTRY:
             words = ["ttk::entry", n[ID]]
             if n[ARG]:
-                words.extend(["-width", n[ARG]])
+                words += ["-width", n[ARG]]
             if n[VAR]:
-                words.extend(["-textvariable", n[VAR]])
+                words += ["-textvariable", n[VAR]]
                 # TODO: setting default values
         elif n[TYPE] == CHECKBUTTON:
             words = ["ttk::checkbutton", n[ID]]
             if n[TEXT]:
-                words.extend(["-text", gui.quote(n[TEXT])])
+                words += ["-text", gui.quote(n[TEXT])]
             if n[VAR]:
-                words.extend(["-variable", n[VAR], "-onvalue", "1"])
+                words += ["-variable", n[VAR], "-onvalue", "1"]
         elif n[TYPE] == LISTBOX:
             words = ["tk::listbox", n[ID]]
             if n[ARG]:
@@ -423,52 +367,51 @@ def generate():
                 if n[ARG][-1] == "*":
                     multi = True
                     n[ARG] = n[ARG][:-1]
-                words.extend(["-height", n[ARG]])
+                words += ["-height", n[ARG]]
                 if multi:
-                    words.extend(["-selectmode", "extended"])
+                    words += ["-selectmode", "extended"]
                 else:
-                    words.extend(["-selectmode", "browse"])
-            words.extend(["-exportselection", "0"])
+                    words += ["-selectmode", "browse"]
+            words += ["-exportselection", "0"]
         elif n[TYPE] == TEXT:
             words = ["tk::text", n[ID]]
             if n[ARG]:
                 wh = n[ARG].split("x")
                 if len(wh) >= 1:
-                    words.extend(["-width", wh[0]])
+                    words += ["-width", wh[0]]
                 if len(wh) >= 2:
-                    words.extend(["-height", wh[1]])
+                    words += ["-height", wh[1]]
         elif n[TYPE] == CANVAS:
             words = ["tk::canvas", n[ID]]
             if n[ARG]:
                 wh = n[ARG].split("x")
                 if len(wh) >= 1:
-                    words.extend(["-width", wh[0]])
+                    words += ["-width", wh[0]]
                 if len(wh) >= 2:
-                    words.extend(["-height", wh[1]])
+                    words += ["-height", wh[1]]
         elif n[TYPE] == TREE:
             words = ["ttk::treeview", n[ID]]
             if n[TEXT]:
-                words.extend(["-columns", gui.quote(n[TEXT])])
+                words += ["-columns", gui.quote(n[TEXT])]
             if n[ARG] == "*":
-                words.extend(["-selectmode", "extended"])
+                words += ["-selectmode", "extended"]
             else:
-                words.extend(["-selectmode", "browse"])
+                words += ["-selectmode", "browse"]
         elif n[TYPE] == SCROLLBAR:
             words = ["ttk::scrollbar", n[ID]]
             if n[ARG] == HORZ:
                 cmd = gui.encase(n[LASTNONSCROLLBAR][ID] + " xview")
-                words.extend(["-orient", "horizontal", "-command", cmd])
+                words += ["-orient", "horizontal", "-command", cmd]
             else:
                 cmd = gui.encase(n[LASTNONSCROLLBAR][ID] + " yview")
-                words.extend(["-orient", "vertical", "-command", cmd])
+                words += ["-orient", "vertical", "-command", cmd]
         else:
             continue
         if n[SCROLLBAR][HORZ]:
-            words.extend(["-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set")])
+            words += ["-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set")]
         elif n[SCROLLBAR][VERT]:
-            words.extend(["-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set")])
+            words += ["-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set")]
         # TODO: many other types, esp. TREE [tree] & TEXT [txt] & CANVAS [c], my favorites
-        print(words)
         s = " ".join(words)
         if n[RAW]:
             s = s + " " + n[RAW]

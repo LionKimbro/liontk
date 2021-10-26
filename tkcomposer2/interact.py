@@ -147,12 +147,10 @@ def update():
         tree.readlines(code)
         gui.cue(".editor.n.f1.tree")
         tree.populate_tree()
-        tree.generate()
-        with open("eraseme.txt", "w") as f:
-            f.write(code)
     gui.cue(".editor.n.f2.text")
     code = gui.text_get()
     if code != last_time[1]:
         last_time[1] = code
         gridding.readlines(code)
+        gridding.generate()
 
