@@ -56,10 +56,12 @@ menu .m
 .m.m1 add command -label Text -underline 0 -command ::ins_text
 .m.m1 add command -label Canvas -underline 0 -command ::ins_canvas
 .m.m1 add separator
+.m.m1 add command -label Notebook -underline 0 -command ::ins_notebook
+.m.m1 add separator
 .m.m1 add command -label {Top Relief} -underline 2 -command ::ins_toprelief
 .m.m1 add command -label {Basic Setup} -underline 1 -command ::ins_basicsetup
 .m.m1 add command -label {Menu} -underline 0 -command ::ins_menu
-.m.m1 add command -label {Example} -underline 1 -command ::ins_example
+.m.m1 add command -label {Example 1} -underline 8 -command ::ins_example
 .m.m1 add command -label {Example 2} -underline 8 -command ::ins_example2
 .m.m1 add command -label {Example 3} -underline 8 -command ::ins_example3
 .m.m1 add command -label {Style} -underline 0 -command ::ins_style
@@ -104,6 +106,17 @@ grid $top.f.cbox -row 2 -column 0 -sticky nsew
 bind $top.f.cbox <<ComboboxSelected>> {puts [$top.f.cbox get]}
 """
 
+txt_listbox = """
+tk::listbox $top.f.l -height 5 -selectmode browse -exportselection 0
+grid $top.f.l -row 0 -column 0 -sticky nsew
+bind $top.f.l <<ListboxSelect>> {global top ; puts [$top.f.l get [$top.f.l curselection]]}
+
+set lbox $top.f.l
+$lbox insert 0 {first}
+$lbox insert 1 {second}
+$lbox insert 2 {third}
+"""
+
 txt_tree = """
 ttk::treeview $top.f.tree -height 6 -yscrollcommand "$top.f.s set"
 grid $top.f.tree -row 2 -column 0 -columnspan 2 -sticky nsew
@@ -136,6 +149,18 @@ txt_canvas = """
 tk::canvas $top.f.c -width 300 -height 200
 grid $top.f.c -row 0 -column 0 -sticky nsew
 $top.f.c create line 0 0 100 50
+"""
+
+txt_notebook = """
+ttk::notebook $top.n
+grid $top.n -row 0 -column 0
+
+ttk::frame $top.n.f1 -width 300 -height 200
+ttk::frame $top.n.f2 -width 300 -height 200
+ttk::frame $top.n.f3 -width 300 -height 200
+$top.n add $top.n.f1 -text "First Page"
+$top.n add $top.n.f2 -text "Second Page"
+$top.n add $top.n.f3 -text "Third Page"
 """
 
 txt_toprelief = """
@@ -314,9 +339,11 @@ def setup():
     gui.mkcmd("ins_entry", lambda: insert(txt_entry))
     gui.mkcmd("ins_checkbutton", lambda: insert(txt_checkbutton))
     gui.mkcmd("ins_combobox", lambda: insert(txt_combobox))
+    gui.mkcmd("ins_listbox", lambda: insert(txt_listbox))
     gui.mkcmd("ins_tree", lambda: insert(txt_tree))
     gui.mkcmd("ins_text", lambda: insert(txt_text))
     gui.mkcmd("ins_canvas", lambda: insert(txt_canvas))
+    gui.mkcmd("ins_notebook", lambda: insert(txt_notebook))
     gui.mkcmd("ins_toprelief", lambda: insert(txt_toprelief))
     gui.mkcmd("ins_basicsetup", lambda: insert(txt_basicsetup))
     gui.mkcmd("ins_example", lambda: insert(txt_example))
