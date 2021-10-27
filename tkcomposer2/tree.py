@@ -87,6 +87,7 @@ S = []  # stack of nodes at levels last seen
 
 all_nodes = []  # list of all nodes, in order constructed
 
+
 types_text = {
     FRAME: "ttk::frame",
     LABELFRAME: "ttk::labelframe",
@@ -327,94 +328,105 @@ def restore_open_closed():
                 gui.tclexec("$w item $tmpi -open "+mem_open[n[ID]])
 
 
+# Generation
+
+words = []  # assembling words for the generator
+
+def add_words(*L):
+    words.extend(L)
+
+def start_widget(constructor):
+    words.extend([constructor, g[NODE][ID]])
+
+def keep_quoted(option, key):
+    import gui
+    if g[NODE][key]:
+        words.extend([option, gui.quote(g[NODE][key])])
+
+def keep_text():
+    keep_quoted("-text", TEXT)
+
+def keep(option, key, also=[]):
+    if g[NODE][key]:
+        words.extend([option, g[NODE][key]])
+        words.extend(also)
+
+def keep_wh():
+    if g[NODE][ARG]:
+        wh = g[NODE][ARG].split("x")
+        if len(wh) >= 1:
+            add_words("-width", wh[0])
+        if len(wh) >= 2:
+            add_words("-height", wh[1])
+
+def final_join():
+    return " ".join(words)+(g[NODE][RAW] or "")
+
 def generate():
     import gui
     L = []
-    for n in all_nodes:
+    for g[NODE] in all_nodes:
+        n = g[NODE]
+        del words[:]
         if n[TYPE] == FRAME:
-            words = ["ttk::frame", n[ID]]
+            start_widget("ttk::frame")
         elif n[TYPE] == LABELFRAME:
-            words = ["ttk::labelframe", n[ID]]
-            if n[TEXT]:
-                words += ["-text", gui.quote(n[TEXT])]
+            start_widget("ttk::labelframe")
+            keep_text()
         elif n[TYPE] == LABEL:
-            words = ["ttk::label", n[ID]]
-            if n[TEXT]:
-                words += ["-text", gui.quote(n[TEXT])]
+            start_widget("ttk::label")
+            keep_text()
         elif n[TYPE] == BUTTON:
-            words = ["ttk::button", n[ID]]
-            if n[TEXT]:
-                words += ["-text", gui.quote(n[TEXT])]
-            if n[VAR]:
-                words += ["-command", n[VAR]]
+            start_widget("ttk::button")
+            keep_text()
+            keep("-command", VAR)
         elif n[TYPE] == ENTRY:
-            words = ["ttk::entry", n[ID]]
-            if n[ARG]:
-                words += ["-width", n[ARG]]
-            if n[VAR]:
-                words += ["-textvariable", n[VAR]]
-                # TODO: setting default values
+            start_widget("ttk::entry")
+            keep("-width", ARG)
+            keep("-textvariable", VAR)
+            # TODO: setting default values
         elif n[TYPE] == CHECKBUTTON:
-            words = ["ttk::checkbutton", n[ID]]
-            if n[TEXT]:
-                words += ["-text", gui.quote(n[TEXT])]
-            if n[VAR]:
-                words += ["-variable", n[VAR], "-onvalue", "1"]
+            start_widget("ttk::checkbutton")
+            keep_text()
+            keep("-variable", VAR, ["-onvalue", "1"])
         elif n[TYPE] == LISTBOX:
-            words = ["tk::listbox", n[ID]]
+            start_widget("tk::listbox")
             if n[ARG]:
                 multi = False
                 if n[ARG][-1] == "*":
                     multi = True
                     n[ARG] = n[ARG][:-1]
-                words += ["-height", n[ARG]]
+                add_words("-height", n[ARG])
                 if multi:
-                    words += ["-selectmode", "extended"]
+                    add_words("-selectmode", "extended")
                 else:
-                    words += ["-selectmode", "browse"]
-            words += ["-exportselection", "0"]
+                    add_words("-selectmode", "browse")
+            add_words("-exportselection", "0")
         elif n[TYPE] == TEXT:
-            words = ["tk::text", n[ID]]
-            if n[ARG]:
-                wh = n[ARG].split("x")
-                if len(wh) >= 1:
-                    words += ["-width", wh[0]]
-                if len(wh) >= 2:
-                    words += ["-height", wh[1]]
+            start_widget("tk::text")
+            keep_wh()
         elif n[TYPE] == CANVAS:
-            words = ["tk::canvas", n[ID]]
-            if n[ARG]:
-                wh = n[ARG].split("x")
-                if len(wh) >= 1:
-                    words += ["-width", wh[0]]
-                if len(wh) >= 2:
-                    words += ["-height", wh[1]]
+            start_widget("tk::canvas")
+            keep_wh()
         elif n[TYPE] == TREE:
-            words = ["ttk::treeview", n[ID]]
-            if n[TEXT]:
-                words += ["-columns", gui.quote(n[TEXT])]
-            if n[ARG] == "*":
-                words += ["-selectmode", "extended"]
-            else:
-                words += ["-selectmode", "browse"]
+            start_widget("ttk::treeview")
+            keep_quoted("-columns", TEXT)
+            add_words("-selectmode",
+                      "extended" if n[ARGS] == "*" else "browse")
         elif n[TYPE] == SCROLLBAR:
-            words = ["ttk::scrollbar", n[ID]]
+            start_widget("ttk::scrollbar")
             if n[ARG] == HORZ:
                 cmd = gui.encase(n[LASTNONSCROLLBAR][ID] + " xview")
-                words += ["-orient", "horizontal", "-command", cmd]
+                add_words("-orient", "horizontal", "-command", cmd)
             else:
                 cmd = gui.encase(n[LASTNONSCROLLBAR][ID] + " yview")
-                words += ["-orient", "vertical", "-command", cmd]
+                add_words("-orient", "vertical", "-command", cmd)
         else:
             continue
         if n[SCROLLBAR][HORZ]:
-            words += ["-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set")]
+            add_words("-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set"))
         elif n[SCROLLBAR][VERT]:
-            words += ["-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set")]
-        # TODO: many other types, esp. TREE [tree] & TEXT [txt] & CANVAS [c], my favorites
-        s = " ".join(words)
-        if n[RAW]:
-            s = s + " " + n[RAW]
-        L.append(s)
+            add_words("-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set"))
+        L.append(final_join())
     print("\n".join(L))
 

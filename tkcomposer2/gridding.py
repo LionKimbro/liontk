@@ -93,27 +93,35 @@ def readlines(s):
     lineparsing.parse(s, parse_line)
 
 
+# Generation
+
+words = []  # assembling words for the generator
+
+def add_words(*L):
+    words.extend(L)
+
+def keep(option, key):
+    if g[NODE][key]:
+        words.extend([option, g[NODE][key]])
+
+def final_join():
+    return " ".join(words)
+
 
 def generate():
     import gui
     L = []
-    for (i,n) in enumerate(tree.peers_order()):
+    for g[NODE] in tree.peers_order():
         if n is None:
             L.append("")
             continue
-        words = ["grid", n[ID]]
-        if n[ROW]:
-            words += ["-row", n[ROW]]
-        if n[COL]:
-            words += ["-column", n[COL]]
-        if n[ROWSPAN]:
-            words += ["-rowspan", n[ROWSPAN]]
-        if n[COLSPAN]:
-            words += ["-columnspan", n[COLSPAN]]
-        if n[STICKY]:
-            words += ["-sticky", n[STICKY]]
-        s = " ".join(words)
-        L.append(s)
+        add_words("grid", n[ID])
+        keep("-row", ROW)
+        keep("-column", COL)
+        keep("-rowspan", ROWSPAN)
+        keep("-columnspan", COLSPAN)
+        keep("-sticky", STICKY)
+        L.append(final_join())
     print()
     print("\n".join(L))
 
