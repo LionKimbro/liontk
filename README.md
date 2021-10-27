@@ -1,7 +1,7 @@
 # liontk
 a Python Tcl/TK GUI system that emphasizes direct direct use of tcl
 
-created: 2021-10-22
+created: 2021-10-22; last updated: 2021-10-27
 
 ## <a name="objectives">Project Objectives</a>
 
@@ -53,6 +53,14 @@ status:
 * Just download the git repository, step into the `tkcomposer/` directory, and run `python go.py`.
 * Select "Insert | Frame" from the menu, and then "Insert | Button" or "Insert | Label", and away you go.
 
+## <a name="liontkcomposer2">liontkcomposer2</a>
+
+I am presently (2021-10-27) [working on tkcomposer2 -- oriented towards making much larger user interfaces than it is easy to do with tkcomposer1.](articles/2021-10-28_tkcomposer2-work.md)
+
+Here's a screenshot:
+
+![Screenshot of tkcomposer2](img/2021-10-27_tkcomposer2-example1.png)
+
 
 ## <a name="liontkref">liontkref</a>
 
@@ -68,6 +76,7 @@ So I wouldn't consider this project "complete" without it.
 
 I wrote one article to introduce this project:
 * [My Work with Python and Tcl/Tk GUIS](articles/2021-10-22_my-work-with-python-and-tcltk-guis.md) -- outlines the basic story of how I came to this particular way of working with Python and Tcl/Tk
+
 
 I have two other articles worth noting here, though they are not strictly part of this project:
 * [tkinter Direct Injection](https://github.com/LionKimbro/lions_internet_office/blob/main/2021/users/lion/entries/2021-09-18_tkinter-direct.md) -- the basic method of working directly with tcl/tk code, from Python
