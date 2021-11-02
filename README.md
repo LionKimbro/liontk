@@ -11,6 +11,7 @@ These are all the things that I want to do underneath the umbrella of this proje
 	* [liontkcomposer](#liontkcomposer) -- a simple tool for composing tcl/tk GUIs very quickly
     * [liontkcomposer2](#liontkcomposer2) -- a more sophisticated tool for composing tcl/tk GUIs very quickly
 	* [liontkref](#liontkref) -- a friendly and interactive reference, itself in tcl/tk + Python, for tcl/tk
+* make the tools easily installable, via pip install
 * [collect & publish articles](#articles)
 	* what this is about (Python + tcl/tk, and in this particular way)
 	* insights gained while working on this particular approach

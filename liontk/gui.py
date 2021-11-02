@@ -49,7 +49,21 @@ createcommand = root.tk.createcommand  # literal key?
 tkeval = root.tk.eval  # direct; handled as a single string by tk
 
 
-# Functions -- primary interfaces: peek, poke, tclexec, & mkcmd
+# Functions -- primary interfaces: peek, poke, tclexec, & mkcmd; also: quote
+
+def quote(s):
+    """Generate a string form for Tcl, that doesn't evaluate.
+    
+    Use poke & peek to avoid this.  But if you're generating code, you need it.
+    """
+    return '"' + s.replace("\\", "\\\\").replace('[', '\\[').replace('$', '\\$').replace('"', '\\"') + '"'
+
+def encase(s):
+    """Generate a string form for Tcl, that DOES evaluate.
+    
+    You shouldn't need this, unless you're generating code.
+    """
+    return '"' + s + '"'
 
 def subst(tkname):
     """Perform substitutions on a tkname.
