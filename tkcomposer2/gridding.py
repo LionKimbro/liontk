@@ -42,10 +42,16 @@ from symbols import *
 import lineparsing
 from lineparsing import has, val
 
+import composing
+from composing import add_words, start_widget, keep_quoted, keep_text
+from composing import keep, keep_wh, final_join, blankline
+
 import tree
 
 
-g = {NODE: None}  # the node working with
+g = {NODE: None,  # the node working with
+     TREE: {STATUS: {}},  # TREE.STATUS: for each (k:) node, (v:) -open value is what?
+     TCL: ""}  # compiled tcl code for the gridding
 
 
 def populate():
@@ -93,35 +99,43 @@ def readlines(s):
     lineparsing.parse(s, parse_line)
 
 
+def populate_tree():
+    """Populate the cue'd tree widget."""
+    import gui
+    g[TREE][STATUS] = gui.store_open_closed()
+    gui.tclexec("$w delete [$w children {}]")
+    for n in tree.all_nodes:
+        gui.poke("tmpp", n[PARENT][ID] if n[PARENT] else "")  # parent
+        gui.poke("tmpi", n[ID])  # ID
+        gui.poke("tmpn", n[NAME])  # name
+        grid_str = ((str(n[COL]) if n[COL] else "-")+","+
+                    (str(n[ROW]) if n[ROW] else "-"))
+        gui.poke("tmpg", grid_str)
+        span_str = ((str(n[COLSPAN]) if n[COLSPAN] else "-")+","+
+                    (str(n[ROWSPAN]) if n[ROWSPAN] else "-"))
+        gui.poke("tmps", span_str)
+        gui.poke("tmpst", n[STICKY] or "-")
+        try:
+            gui.tclexec("$w insert $tmpp end -id $tmpi -text $tmpn -values [list $tmpg $tmps $tmpst] -open true")
+        except:
+            pass  # this can happen if it already exists
+    gui.restore_open_closed(g[TREE][STATUS])
+
+
 # Generation
 
-words = []  # assembling words for the generator
-
-def add_words(*L):
-    words.extend(L)
-
-def keep(option, key):
-    if g[NODE][key]:
-        words.extend([option, g[NODE][key]])
-
-def final_join():
-    return " ".join(words)
-
-
 def generate():
-    import gui
-    L = []
+    composing.reset(g)
     for g[NODE] in tree.peers_order():
-        if n is None:
-            L.append("")
+        if g[NODE] is None:
+            blankline()
             continue
-        add_words("grid", n[ID])
+        start_widget("grid")  # an abuse of "start_widget," but it works
         keep("-row", ROW)
         keep("-column", COL)
         keep("-rowspan", ROWSPAN)
         keep("-columnspan", COLSPAN)
         keep("-sticky", STICKY)
-        L.append(final_join())
-    print()
-    print("\n".join(L))
+        final_join()
+    g[TCL] = composing.total_join()
 

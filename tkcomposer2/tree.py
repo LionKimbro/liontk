@@ -79,9 +79,15 @@ from symbols import *
 import lineparsing
 from lineparsing import has, val
 
+import composing
+from composing import add_words, start_widget, keep_quoted, keep_text
+from composing import keep, keep_wh, final_join
+
 
 g = {NODE: None,  # node presently constructing (via node_create)
-     NEXTID: 1}
+     NEXTID: 1,
+     TREE: {STATUS: {}},  # TREE.STATUS: for each (k:) node, (v:) -open value is what?
+     TCL: ""}  # compiled tcl code for the windows
 
 S = []  # stack of nodes at levels last seen
 
@@ -124,6 +130,11 @@ def reset():
     del S[:]
     all_nodes[:] = []
     g[NEXTID] = 1
+
+def reset_gridding():
+    for n in all_nodes:
+        for k in [ROW, COL, ROWSPAN, COLSPAN, STICKY]:
+            n[k] = None
 
 def node_create():
     """Create a new, blank node."""
@@ -281,14 +292,14 @@ def parse_line():
         g[NODE][TYPE] = LABEL
 
 def readlines(s):
-    reset()
+    """Call reset, first."""
     lineparsing.parse(s, parse_line)
 
 
 def populate_tree():
     """Populate the cue'd tree widget."""
     import gui
-    store_open_closed()
+    g[TREE][STATUS] = gui.store_open_closed()
     gui.tclexec("$w delete [$w children {}]")
     for n in all_nodes:
         gui.poke("tmpp", n[PARENT][ID] if n[PARENT] else "")  # parent
@@ -298,76 +309,20 @@ def populate_tree():
         gui.poke("tmpt", n[TEXT] or "-")  # text
         gui.poke("tmpv", n[VAR] or "-")  # variable
         try:
-            gui.tclexec("$w insert $tmpp end -id $tmpi -text $tmpn -values [list $tmpty $tmpt $tmpv]")
+            gui.tclexec("$w insert $tmpp end -id $tmpi -text $tmpn -values [list $tmpty $tmpt $tmpv] -open true")
         except:
             pass  # this can happen if it already exists
-    restore_open_closed()
-    mem_open.clear()
+    gui.restore_open_closed(g[TREE][STATUS])
 
-
-mem_open = {}  # memory of whether a given node was opened or closed in the GUI
-
-def store_open_closed():
-    import gui
-    for n in all_nodes:
-        gui.poke("tmpi", n[ID])
-        if gui.tclexec("$w exists $tmpi") == "1":
-            mem_open[n[ID]] = {"true": "1",
-                               "1": "1",
-                               "false": "0",
-                               "0": "0"}[gui.tclexec("$w item $tmpi -open")]
-
-def restore_open_closed():
-    import gui
-    for n in all_nodes:
-        gui.poke("tmpi", n[ID])
-        if n[ID] not in mem_open:
-            gui.tclexec("$w item $tmpi -open 1")  # default to open!
-        else:
-            if gui.tclexec("$w exists $tmpi") == "1":
-                gui.tclexec("$w item $tmpi -open "+mem_open[n[ID]])
 
 
 # Generation
 
-words = []  # assembling words for the generator
-
-def add_words(*L):
-    words.extend(L)
-
-def start_widget(constructor):
-    words.extend([constructor, g[NODE][ID]])
-
-def keep_quoted(option, key):
-    import gui
-    if g[NODE][key]:
-        words.extend([option, gui.quote(g[NODE][key])])
-
-def keep_text():
-    keep_quoted("-text", TEXT)
-
-def keep(option, key, also=[]):
-    if g[NODE][key]:
-        words.extend([option, g[NODE][key]])
-        words.extend(also)
-
-def keep_wh():
-    if g[NODE][ARG]:
-        wh = g[NODE][ARG].split("x")
-        if len(wh) >= 1:
-            add_words("-width", wh[0])
-        if len(wh) >= 2:
-            add_words("-height", wh[1])
-
-def final_join():
-    return " ".join(words)+(g[NODE][RAW] or "")
-
 def generate():
     import gui
-    L = []
+    composing.reset(g)
     for g[NODE] in all_nodes:
         n = g[NODE]
-        del words[:]
         if n[TYPE] == FRAME:
             start_widget("ttk::frame")
         elif n[TYPE] == LABELFRAME:
@@ -427,6 +382,6 @@ def generate():
             add_words("-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set"))
         elif n[SCROLLBAR][VERT]:
             add_words("-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set"))
-        L.append(final_join())
-    print("\n".join(L))
+        final_join()
+    g[TCL] = composing.total_join()
 

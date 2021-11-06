@@ -295,7 +295,30 @@ def list_set(L):
 
 def list_selected():
     return tclexec("$w get [$w curselection]")
-    
+
+
+def tree_items():
+    L = []
+    process = tclexec("$w children {}").split()
+    while process:
+        n = process.pop()
+        L.append(n)
+        process.extend(tclexec("$w children "+n).split())
+    return L
+
+def open_node(n):
+    tclexec("$w item "+n+" -open true")
+
+def store_open_closed():
+    """Return a dictionary representing open & closed state in tree."""
+    return {n: tclexec("$w item "+n+" -open") for n in tree_items()}
+
+def restore_open_closed(D):
+    no_longer = []
+    for k, v in D.items():
+        if tclexec("$w exists "+k) == "1":
+            tclexec("$w item "+k+" -open " + v)
+
 
 def set_win():
     """Don't call this for new code.
