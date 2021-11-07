@@ -44,7 +44,7 @@ from lineparsing import has, val
 
 import composing
 from composing import add_words, start_widget, keep_quoted, keep_text
-from composing import keep, keep_wh, final_join, blankline
+from composing import keep, keep_wh, end_sentence, blankline
 
 import tree
 
@@ -130,12 +130,12 @@ def generate():
         if g[NODE] is None:
             blankline()
             continue
-        start_widget("grid")  # an abuse of "start_widget," but it works
+        add_words("grid", g[NODE][ID])
         keep("-row", ROW)
         keep("-column", COL)
         keep("-rowspan", ROWSPAN)
         keep("-columnspan", COLSPAN)
         keep("-sticky", STICKY)
-        final_join()
+        end_sentence()
     g[TCL] = composing.total_join()
 

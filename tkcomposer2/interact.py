@@ -83,6 +83,14 @@ grid rowconfigure $top.n.f2 0 -weight 1
 grid rowconfigure $top.n.f2 1 -weight 0
 
 
+tk::text $top.n.f3.t -width 60 -height 40 -yscrollcommand "$top.n.f3.s set" -state disabled
+ttk::scrollbar $top.n.f3.s -orient vertical -command "$top.n.f3.t yview"
+grid $top.n.f3.t -row 0 -column 0 -sticky nsew
+grid $top.n.f3.s -row 0 -column 1 -sticky nsew
+grid columnconfigure $top.n.f3 0 -weight 1
+grid columnconfigure $top.n.f3 1 -weight 0
+
+
 tk::toplevel .toplevel
 ttk::frame .toplevel.topframe
 """
@@ -234,4 +242,13 @@ def update():
                 gui.tclexec(ln)
             except:
                 pass
+        update_output()
 
+
+def update_output():
+    gui.cue(".editor.n.f3.t")
+    gui.text_rw()
+    gui.text_set(tree.g[TCL]+"\n"+gridding.g[TCL]+"\n")
+    gui.text_ro()
+
+    

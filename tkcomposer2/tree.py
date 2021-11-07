@@ -81,7 +81,7 @@ from lineparsing import has, val
 
 import composing
 from composing import add_words, start_widget, keep_quoted, keep_text
-from composing import keep, keep_wh, final_join
+from composing import keep, keep_wh, end_sentence
 
 
 g = {NODE: None,  # node presently constructing (via node_create)
@@ -105,11 +105,12 @@ types_text = {
     TEXT: "tk::text",
     CANVAS: "tk::canvas",
     TREE: "ttk::treeview",
+    NOTEBOOK: "ttk::notebook",
     SCROLLBAR: "ttk::scrollbar"
 }
 
 read_types = {
-    None: FRAME,
+    None: None,
     "f": FRAME,
     "lf": LABELFRAME,
     "lbl": LABEL,
@@ -120,6 +121,7 @@ read_types = {
     "txt": TEXT,
     "c": CANVAS,
     "tree": TREE,
+    "n": NOTEBOOK,
     "-": SCROLLBAR,  # ARG: HORZ
     "|": SCROLLBAR  # ARG: VERT
 }
@@ -288,7 +290,7 @@ def parse_line():
     parse_text()
     parse_var()
     parse_raw()
-    if g[NODE][TEXT] and g[NODE][TYPE] == FRAME:  # convenience hack
+    if g[NODE][TEXT] and g[NODE][TYPE] == None:  # convenience hack
         g[NODE][TYPE] = LABEL
 
 def readlines(s):
@@ -368,6 +370,8 @@ def generate():
             keep_quoted("-columns", TEXT)
             add_words("-selectmode",
                       "extended" if n[ARGS] == "*" else "browse")
+        elif n[TYPE] == NOTEBOOK:
+            start_widget("ttk::notebook")
         elif n[TYPE] == SCROLLBAR:
             start_widget("ttk::scrollbar")
             if n[ARG] == HORZ:
@@ -382,6 +386,12 @@ def generate():
             add_words("-xscrollcommand", gui.encase(n[SCROLLBAR][HORZ][ID] + " set"))
         elif n[SCROLLBAR][VERT]:
             add_words("-yscrollcommand", gui.encase(n[SCROLLBAR][VERT][ID] + " set"))
-        final_join()
+        end_sentence()
+        if n[TYPE] == FRAME:
+            if n[PARENT] is not None and n[PARENT][TYPE] == NOTEBOOK:
+                add_words(n[PARENT][ID], "add", n[ID])
+                keep_text()
+                end_sentence()
+                
     g[TCL] = composing.total_join()
 
