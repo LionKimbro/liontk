@@ -1,0 +1,17 @@
+
+listbox:
+* make the string list generate insert commands
+
+deep problems:
+* toplevel reconstruction
+  -- when the user uses something other than "$top",
+     you need to be able to update the cage and make it work
+
+architectural problems:
+* segregate out "node.py", and make it a little bit more isolated, in terms of the code generation process
+  * "tree.py" -- about parsing the tree
+  * "gridding.py" -- about parsing the gridding
+  * "node.py" -- about node rendering - separately the grid portion and the original widget portion
+
+
+
