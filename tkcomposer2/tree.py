@@ -290,8 +290,11 @@ def parse_line():
     parse_text()
     parse_var()
     parse_raw()
-    if g[NODE][TEXT] and g[NODE][TYPE] == None:  # convenience hack
-        g[NODE][TYPE] = LABEL
+    if g[NODE][TYPE] is None:  # convenience
+        if g[NODE][TEXT]:
+            g[NODE][TYPE] = LABEL
+        else:
+            g[NODE][TYPE] = FRAME
 
 def readlines(s):
     """Call reset, first."""
