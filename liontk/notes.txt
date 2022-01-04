@@ -1,0 +1,185 @@
+ttl: Notes
+date: 2021-01-02
+
+
+  Notes about liontk.
+  * Reference Notes
+  * Implementation Notes
+
+  I'll try to keep them decently separated.
+  In the future, consider putting them in different files.
+
+
+== Tcl/Tk Data Dictionary ==
+date: 2021-01-02
+
+  mkcmd bindings
+  -----------------------------------------
+  These functions bind a tcl command string, to a tcl function.
+
+
+  Tcl                 Python Function     Notes                                Solid?
+  ------------------  ------------------  -----------------------------------  -----------
+  wm_delete_window    wm_delete_window    I question whether this function     NO.
+                                          is absolutely necessary; If I
+                                          remove it, will the window just
+                                          close on its own?  If so, I want to
+                                          just DO THAT, since I've taken the
+                                          close checking out to its own place.
+
+  mainloop_tasks      mainloop_tasks      Calls (and removes) each entry in    FAIRLY SOLID
+                                          tasks;  Then checks if all top
+                                          level windows are closed, and, if
+                                          they are, shuts down tcl/Tk.  The
+                                          loop() call will exit.
+
+
+  tcl global variables:
+
+  global   subtype                       description
+  -------- ----------------------------- ------------------------------------------------------
+  w        widget ID, in full or in part widget presently being worked with;
+                                         "full" means a full name of a Tcl/Tk widget;
+                                           (for example: .toplevel.blah.blah)
+                                         "part" means a widget that requires some dereferencing
+                                           (for example: $top.blah.blah)
+  top      toplevel widget ID, in full   full widget for the top-level;
+                                         reset by cue_top(), which queries top()
+
+
+
+== Python Data Dictionary ==
+date: 2021-01-02
+
+  global variables (non-g-vars)
+
+  global   type      subtype             description
+  -------- --------- ------------------- ------------------------------------------------------
+  tasks    list      nullary functions   list of functions to call, ONCE, at next loop cycle
+
+
+  global variables (g-vars)
+
+  g-var    type      subtype             description
+  -------- --------- ------------------- ------------------------------------------------------
+  NEXTID   int       monotonic sequence  starting at 1, assigns IDs via nextid(), presently
+                                         (2021-01-02) used only to label recurring top-level
+                                         windows
+
+
+== Python Modulare Structure ==
+date: 2021-01-02
+
+f: flags
+  *: public          [col:0]  -- available for public use
+  !: experimental
+  X: REMOVED
+  ?: insufficiently documented to use
+  N: special note attached
+
+components:
+  init: initialization & shutdown code
+  loop: main loop control
+  cue: references (assigns to or reads via) "w"
+  top: references (assigns to or reads via) "top"
+  q: general query of info from the system
+  !: assign/write info to the system, or affect a change to the system state
+
+widgets:  -- (what specific widget this engages)
+  w: a widget, generically, via $w
+  toplevel: a toplevel window, sometimes via $w, sometimes via $top
+  <text>: text widgets: ENTRY, TEXT
+  
+
+  function.............. f.. components................. widgets. description............................
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+GUI.PY
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  nextid                               util                       returns next unique number assignment
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  setup                  *   init                                 setup gui module
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  closing_check              init loop                            checks whether the mainloop is done, or not
+  after_idle             *        loop                            accelerate next tasks execution
+  loop                   *        loop                            begin main loop (RUN THIS TO START)
+  schedule                        loop                            tells Tcl/Tk to call in 100 ms
+  cancel                          loop                            cancels a previous schedule
+  mainloop_tasks                  loop                            pops tasks, and executes them; calls closing_check at end
+  debug                  *!       loop util                       pause loop schedule and set breakpoint
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  cue(tkstr)             *    w                   !      w        cue $w to named widget, or the current window
+  cur                    *    w                 q        w        returns $w
+  exists                 *    w                 q        w        return True if the cue'd window still exists
+  name                   *    w                 q        w        returns solitary name of $w, without parents (winfo name)
+  wtype                  *    w                 q        w        returns window type of $w (winfo class) as a symbol (ENTRY, TEXT, LISTBOX)
+  children               *    w                 q        w        return (full?) path names of children of $w as a list
+  destroy                *    w                   !      w        destroy $w
+  cue_top                *    w top               !      toplevel cue $top to the toplevel window for $w
+  ----------------------+---+---------------------------+--------+------------------------------------------------  
+  text_get               *    w                 q        <text>   return the text of a text (ENTRY, TEXT) window
+  text_set               *    w                   !      <text>   set the text of a text (ENTRY, TEXT) window
+  text_ro                *    w                   !      <text>   make text (ENTRY, TEXT) window read-only
+  text_rw                *    w                   !      <text>   make text (ENTRY, TEXT) window read-write
+  text_see_end           *    w                   !      TEXT     cause the end of a TEXT area to be visible
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  list_selected          * ?  w                 q        LIST     get the list of selected items in a list (Q: HOW IS IT RETURNED?!?)
+  list_clear             *    w                   !      LIST     clear list
+  list_add(s)            *    w                   !      LIST     append to list
+  list_set(L)            *    w                   !      LIST     set list items to this list
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+            (a space for working with trees, I imagine)
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  focused                * N                    q        toplevel return full pathname of current Tk focused window (or "");
+                                                                  NOTE: this fails during debugging, because the window is defocused while debugging
+  toplevels              *                      q        toplevel return list of full pathnames of toplevel windows
+  lift                   *    w                   !      toplevel raise the cue'd window to the top level
+  title                  *    w                   !      toplevel set the title for the cue'd $w's toplevel windo
+  top                    *    w                 q        toplevel returns top level for $w (winfo toplevel $w)
+  toplevel_unique(name)  *    w top               !      toplevel create or lift a unique toplevel
+  toplevel_recurring(pre)*    w top               !      toplevel create a new toplevel, return its full tkname
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+  wm_delete_window        X   w                          toplevel removed -- see lsf entry below
+  ----------------------+---+---------------------------+--------+------------------------------------------------
+
+
+== wm_delete_window ==
+date: 2021-01-02
+
+  I disabled the implementation, and removed part of its code.
+  The key thing is that deleting a window, -- I will likely want that to be interceptable.
+  That way, key information can be deleted from the window.
+
+  I think what I will want to do is create a function:
+    def predelete_call(fn):
+        ...
+
+  ...which will call:
+
+    wm protocol $top WM_DELETE_WINDOW anon34
+
+  ...where "anon34" is bound to a function that knows the identity of the window..?
+  
+  HMM, ...
+
+  What do I want...
+
+  OK, it's clear:
+
+  I want to be able to make a SINGLE general function that is called,
+  every time a window is about to be closed, and I want it to have the
+  id of the window being closed clear in mind (in a data variable) --
+  however that information would be aquired.
+
+  I do NOT want to bind functions to closures of individual windows.
+  I just want that one, "it's closing" function.
+
+  And I don't want to implement a "don't! don't close!" functionality.
+  I don't believe in it.
+
+
+  So I need to either (A) know how to pull the id of the window, or
+  (B) make a unique call for each window.  And I want (A) to be the
+  solution.
+
+  That means research.
+

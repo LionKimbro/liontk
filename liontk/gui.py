@@ -7,18 +7,14 @@ select(win)  -- select a window
 import tkinter as tk
 
 from symbols import *
-from listdict import cue as list_cue
-from listdict import val, val1, val01, req, srt
-from listdict import EQ, NEQ, GT, LT, GTE, LTE
-from listdict import CONTAINS, NCONTAINS, WITHIN, NWITHIN
 
-import menubar
+import tcltalk
+from tcltalk import quote, encase, peek, poke, tclexec, mkcmd
 
 
 # Global Variables
 
-g = {NEXTID: 1,
-     TCL: {REQUEST: None, RESULT: None}}
+g = {NEXTID: 1}
 
 
 def nextid():
@@ -27,84 +23,58 @@ def nextid():
     return g[NEXTID]-1
 
 
-# Global Variables -- Running Tasks
+# Global Variables -- Scheduled Tasks (nullary functions; run once)
 
 tasks = []
 
-CLOSETOP="CLOSETOP"  # TYPE:CLOSETOP -- instructs to close TOPLEVEL
-TOPLEVEL="TOPLEVEL"  # TOPLEVEL -- contains the toplevel window to close
 
-CALL="CALL"  # TYPE:CALL -- instructs to call a specific fn
-FN="FN"  # the function to call
+# Functions -- Setup routine
 
-EXIT="EXIT"  # TYPE:EXIT -- instructs to exit the program entirely
-
-
-# Global Root & Functions -- Tk Fundamental
-
-root = tk.Tk()
-
-call = root.tk.call  # receives a list of literal strings
-createcommand = root.tk.createcommand  # literal key?
-tkeval = root.tk.eval  # direct; handled as a single string by tk
-
-
-# Functions -- primary interfaces: peek, poke, tclexec, & mkcmd; also: quote
-
-def quote(s):
-    """Generate a string form for Tcl, that doesn't evaluate.
-    
-    Use poke & peek to avoid this.  But if you're generating code, you need it.
+def setup():
     """
-    return '"' + s.replace("\\", "\\\\").replace('[', '\\[').replace('$', '\\$').replace('"', '\\"') + '"'
-
-def encase(s):
-    """Generate a string form for Tcl, that DOES evaluate.
-    
-    You shouldn't need this, unless you're generating code.
+    Establish basic global GUI settings assumed by liontk.
+    Must be called AFTER tcltalk.setup().
+    Must be called ONCE, and ONLY once.
     """
-    return '"' + s + '"'
+    tclexec("wm withdraw .")  # close initial tk window
+    tclexec("option add *tearOff 0")  # turn off tear-off menus
+#   mkcmd("wm_delete_window", wm_delete_window)
+    mkcmd("mainloop_tasks", mainloop_tasks)
 
-def subst(tkname):
-    """Perform substitutions on a tkname.
+
+def closing_check():
+    """Shut-down (internal; not to be called externally.)
     
-    This is most commonly used to resolve a full path.
+    The GUI system shuts down automatically when the last window is closed.
     
-    For example, "$top.foo" can substitute to "$tag1.foo".
+    This routine MUST NOT be called by the consumer of this API.
+    
+    This routine ASSUMES that:
+    * there is no longer any scheduled timer
+    * there are no longer any top level windows
+    
+    TODO:
+    
+    There is presently NO WAY for the consumer of the API to shut down
+    the system; Only the user can instigate that, by shutting all
+    windows.  This said, sys.exit() should work just fine.  And a way
+    to do it a "proper" way would be to close each top-level window,
+    by calling wm_delete_window after cueing each top level window.
+    YES, a function should be created that does this.
+    
     """
-    return tkeval('subst '+tkname)
-
-def peek(tkname):
-    """Peek a value.
-    
-    For example, peek("w") -> ".settings" (or whatever)
-    """
-    return tkeval('set '+tkname)
-
-def poke(tkname, s):
-    """Poke a string value literally into tk.
-    
-    Note that when you use CALL, it doesn't perform $-substitutions.
-    So I perform substitutions literally for the key, and then use that for the set call.
-    """
-    call('set', subst(tkname), s)  # use call, because it will work literally
-
-
-def tclexec(tcl_code):
-    """Run tcl code"""
-    g[TCL][REQUEST] = tcl_code
-    g[TCL][RESULT] = tkeval(tcl_code)
-    return g[TCL][RESULT]
-
-def mkcmd(tkname, fn):
-    """Bind a tk command to a function"""
-    createcommand(tkname, fn)
+    if not toplevels():
+        root.destroy()
+        return True
+    else:
+        return False
 
 
 # Functions -- Tk main loop control
 
 def loop():
     """Setup complete; Run main loop."""
+    schedule()
     root.mainloop()
 
 
@@ -126,21 +96,11 @@ def cancel():
 
 
 def mainloop_tasks():
-    import interact
-    interact.update()
     while tasks:
-        D = tasks.pop()
-        if D[TYPE] == CLOSETOP:
-            cue(D[TOPLEVEL])
-            tclexec("destroy $w")
-            if not toplevels():
-                task_exit()
-                after_idle()
-        elif D[TYPE] == CALL:
-            D[FN]()
-        elif D[TYPE] == EXIT:
-            root.destroy()
-    schedule()  # schedule the next run
+        fn = tasks.pop()
+        fn()
+    if not closing_check():
+        schedule()  # schedule next run
 
 
 # Functions -- main entry & debug
@@ -149,17 +109,6 @@ def debug():
     cancel()
     breakpoint()
     schedule()
-
-
-# Functions -- Setup routine
-
-
-def setup():
-    tclexec("wm withdraw .")  # close initial tk window
-    tclexec("option add *tearOff 0")  # turn off tear-off menus
-    mkcmd("wm_delete_window", wm_delete_window)
-    mkcmd("mainloop_tasks", mainloop_tasks)
-    schedule()  # start the main loop
 
 
 # Focus & Cue-ing
@@ -178,7 +127,7 @@ def cue(tkname=None):
     if tkname is None:
         tkname = focused()
     else:
-        tkname = subst(tkname)
+        tkname = tcltalk.subst(tkname)
     poke("w", tkname)
 
 def cue_top():
@@ -187,6 +136,10 @@ def cue_top():
 
 def cur():
     return peek("w")
+
+def exists():
+    """Return True if the cue'd window still exists."""
+    return tclexec("winfo exists $w") == '1'
 
 def top():
     """Returns the toplevel for $w."""
@@ -226,6 +179,11 @@ def wtype():
 def children():
     """Return the path names of the children of $w, as a list"""
     return tclexec("winfo children $w").split()
+
+
+def destroy():
+    """Destroy the cue'd window."""
+    tclexec("destroy $w")
 
 
 def text_get():
@@ -297,28 +255,6 @@ def list_selected():
     return tclexec("$w get [$w curselection]")
     
 
-def set_win():
-    """Don't call this for new code.
-    
-    This is for compatability with older code.
-    It sets $win to the toplevel for w.
-    """
-    tclexec("set win [winfo toplevel $w]")
-
-def cuekind(kind):
-    """Cue a unique top-level, by kind.
-    
-    Note that it must be UNIQUE, otherwise behavior is undefined.
-    """
-    rec = record_for_kind(kind)
-    assert rec[UNIQUE]
-    cue(rec[TKNAME])
-
-
-def tkname_to_top(tkname):
-    poke("tmp", tkname)
-    return tclexec("winfo toplevel $tmp")
-
 def focused():
     """Return tkname of current Tk focused window.
     
@@ -341,70 +277,46 @@ def title(ttl):
     poke("tmp", ttl)
     tclexec("wm title [winfo toplevel $w] $tmp")
 
-def exists():
-    """Return True if the cue'd window still exists."""
-    return tclexec("winfo exists $w") == '1'
-
 def toplevels():
     return tclexec("winfo children .").split()
 
-def toplevel_unique(tkname, ttl):
+def toplevel_unique(tkname):
     """Create or lift a unique toplevel.
-    
-    If it was already created:
-      - the window is lifted,
-      - returns False
     
     If it was NOT already created,
       - the window is created,
-      - returns True (so you can do further preparations for it
+XXX   - it is hooked up for WM_DELETE_WINDOW (so it'll close)
+      - returns True (meaning: a NEW window)
+
+    If it was already there, though,
+      - returns False (meaning: a PRE-EXISTING window)
+
+    In both cases,
+      - $w points to the toplevel
+      - $top points to the toplevel
+      - the toplevel window is lifted to the top
     
-    TODO: relocate title assignment, outside of this fn,
-          matching toplevel_recurring;
-     [ ] and then update the docs of toplevel_recurring,
-         removing the explanation
+    NOTE: Formerly, this function titled the window.
+          That activity is now left to the caller.
     """
     cue(tkname)
-    if exists():
-        lift()
-        return False
-    else:
+    makeit = not exists()
+    if makeit:
         tclexec("toplevel $w")
-        cue_top()
         title(ttl)
-        tclexec("wm protocol $w WM_DELETE_WINDOW wm_delete_window")
-        menubar.attach()
-        return True
+#       tclexec("wm protocol $w WM_DELETE_WINDOW wm_delete_window")
+    lift()
+    cue_top()
+    return makeit
 
 def toplevel_recurring(tkname_prefix):
-    """Create a new top-level, and set $top to, and return, its tkname.
-    
-    Because the titles of recurring windows are highly variable,
-    title assignment is not bundled with this functionality.
-    """
+    """Create a new top-level, and set $top to, and return, its tkname."""
     tkname = tkname_prefix + str(nextid())
     cue(tkname)
     tclexec("toplevel $w")
+#   tclexec("wm protocol $w WM_DELETE_WINDOW wm_delete_window")
+    lift()
     cue_top()
-    tclexec("wm protocol $w WM_DELETE_WINDOW wm_delete_window")
-    menubar.attach()
     return tkname
 
-def wm_delete_window():
-    """A top-level is being closed.  Is the program over?"""
-    cue(); task_closetop(top())
-
-
-# Task Creation
-
-def task_closetop(toplevel):
-    tasks.append({TYPE:CLOSETOP,
-                  TOPLEVEL: toplevel})
-
-def task_fn(fn):
-    tasks.append({TYPE:CALL,
-                  FN: fn})
-
-def task_exit():
-    tasks.append({TYPE:EXIT})
 
