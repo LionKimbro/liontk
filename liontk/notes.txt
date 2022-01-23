@@ -88,7 +88,7 @@ components:
 widgets:  -- (what specific widget this engages)
   w: a widget, generically, via $w
   toplevel: a toplevel window, sometimes via $w, sometimes via $top
-  <text>: text widgets: ENTRY, TEXT
+  <text>: text widgets: ENTRY, TEXT, LABEL (write-only)
   
 
   function.............. f.. components................. widgets. description............................
@@ -111,7 +111,7 @@ GUI.PY
   cur                    *    w                 q        w        returns $w
   exists                 *    w                 q        w        return True if the cue'd window still exists
   name                   *    w                 q        w        returns solitary name of $w, without parents (winfo name)
-  wtype                  *    w                 q        w        returns window type of $w (winfo class) as a symbol (ENTRY, TEXT, LISTBOX)
+  wtype                  *    w                 q        w        returns window type of $w (winfo class) as a symbol (ENTRY, TEXT, LISTBOX, LABEL)
   children               *    w                 q        w        return (full?) path names of children of $w as a list
   destroy                *    w                   !      w        destroy $w
   cue_top                *    w top               !      toplevel cue $top to the toplevel window for $w

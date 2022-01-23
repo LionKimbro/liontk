@@ -18,11 +18,13 @@ encase(s)  -- create a string form for Tcl, that DOES evaluate
 subst(s)  -- substitute a tk string; ex: $top.foo to x.foo
 peek(var)  -- peek at the value of a Tk variable
 poke(var, s)  -- poke a value into a string
+tclexec(tclcode)  -- execute code in Tcl directly
+mkcmd(tkname, fn)  --- bind a command from Tcl to Python
 """
 
 import tkinter as tk
 
-from symbols import *
+from liontk.symbols import *
 
 
 # Global Root & Functions -- Tk Fundamental

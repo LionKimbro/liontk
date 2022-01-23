@@ -1,4 +1,4 @@
-"""guisys.py  -- GUI system
+"""gui.py  -- GUI system
 
 select(win)  -- select a window
   "win"  -- the tkinter name ("tkname") for a toplevel (ex: ".settings")
@@ -6,15 +6,17 @@ select(win)  -- select a window
 
 import tkinter as tk
 
-from symbols import *
+from liontk.symbols import *
 
-import tcltalk
-from tcltalk import quote, encase, peek, poke, tclexec, mkcmd
+import liontk.tcltalk as tcltalk
+from liontk.tcltalk import quote, encase, peek, poke, tclexec, mkcmd
 
 
 # Global Variables
 
 g = {NEXTID: 1}
+
+root = None  # MUST be assigned AFTER tcltalk is setup
 
 
 def nextid():
@@ -36,10 +38,13 @@ def setup():
     Must be called AFTER tcltalk.setup().
     Must be called ONCE, and ONLY once.
     """
+    global root
     tclexec("wm withdraw .")  # close initial tk window
     tclexec("option add *tearOff 0")  # turn off tear-off menus
 #   mkcmd("wm_delete_window", wm_delete_window)
     mkcmd("mainloop_tasks", mainloop_tasks)
+    root = tcltalk.root
+    
 
 
 def closing_check():
@@ -173,6 +178,8 @@ def wtype():
         return TEXT
     elif x == "Listbox":
         return LISTBOX
+    elif x == "TLabel":
+        return LABEL
     else:
         return x
 
@@ -207,6 +214,9 @@ def text_set(s):
         poke("tmp", s)
         tclexec("$w delete 1.0 end")
         tclexec("$w insert 1.0 $tmp")
+    elif wt == LABEL:
+        poke("tmp", s)
+        tclexec("$w configure -text $tmp")
     else:
         raise ValueError("$w type not recognized")
 
@@ -303,7 +313,6 @@ XXX   - it is hooked up for WM_DELETE_WINDOW (so it'll close)
     makeit = not exists()
     if makeit:
         tclexec("toplevel $w")
-        title(ttl)
 #       tclexec("wm protocol $w WM_DELETE_WINDOW wm_delete_window")
     lift()
     cue_top()

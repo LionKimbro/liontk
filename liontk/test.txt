@@ -1,0 +1,158 @@
+title: Testing with a Tiny LSF Outliner
+date: 2022-01-03
+
+== Specification of User Interface ==
+date: 2022-01-03
+
+
+-- CODE --
+
+$top
+  l
+    tree [tree]
+    s [|]
+  r
+    top
+      title_lbl "title:"
+      ttl [ent:80]
+      tell_node "node: n343"
+      tell_parent "parent: n310"
+      tell_children "children: n334 n385 n100"
+    middle
+      otherkeys [tree]
+      s [|]
+    bottom
+      text [txt:80x40]
+      s [|]
+
+
+-- GRIDDING --
+
+$top
+
+$top.l [0,0] {ns}
+$top.r [1,0] {nsew}
+
+$top.l.tree [0,0] {nsew}
+$top.l.s [1,0] {nsw}
+
+$top.r.top [0,0] {we}
+$top.r.middle [0,1] {w}
+$top.r.bottom [0,2] {w}
+
+$top.r.top.title_lbl [0,0] {w}
+$top.r.top.ttl [1,0]
+$top.r.top.tell_node [0,1] <2,1> {w}
+$top.r.top.tell_parent [0,2] <2,1> {w}
+$top.r.top.tell_children [0,3] <2,1> {w}
+
+$top.r.middle.otherkeys [0,0]
+$top.r.middle.s [1,0]
+
+$top.r.bottom.text [0,0]
+$top.r.bottom.s [1,0]
+
+
+-- OUTPUT --
+
+ttk::frame $top
+ttk::frame $top.l
+ttk::treeview $top.l.tree -selectmode browse -yscrollcommand "$top.l.s set"
+ttk::scrollbar $top.l.s -orient vertical -command "$top.l.tree yview"
+ttk::frame $top.r
+ttk::frame $top.r.top
+ttk::label $top.r.top.title_lbl -text "title:"
+ttk::entry $top.r.top.ttl -width 80
+ttk::label $top.r.top.tell_node -text "node: n343"
+ttk::label $top.r.top.tell_parent -text "parent: n310"
+ttk::label $top.r.top.tell_children -text "children: n334 n385 n100"
+ttk::frame $top.r.middle
+ttk::treeview $top.r.middle.otherkeys -selectmode browse -yscrollcommand "$top.r.middle.s set"
+ttk::scrollbar $top.r.middle.s -orient vertical -command "$top.r.middle.otherkeys yview"
+ttk::frame $top.r.bottom
+tk::text $top.r.bottom.text -width 80 -height 40 -yscrollcommand "$top.r.bottom.s set"
+ttk::scrollbar $top.r.bottom.s -orient vertical -command "$top.r.bottom.text yview"
+
+grid $top
+
+grid $top.l -row 0 -column 0
+grid $top.r -row 0 -column 1
+
+grid $top.l.tree -row 0 -column 0 -sticky nsew
+grid $top.l.s -row 0 -column 1 -sticky nsw
+
+grid $top.r.top -row 0 -column 0 -sticky we
+grid $top.r.middle -row 1 -column 0 -sticky w
+grid $top.r.bottom -row 2 -column 0 -sticky w
+
+grid $top.r.top.title_lbl -row 0 -column 0 -sticky w
+grid $top.r.top.ttl -row 0 -column 1
+grid $top.r.top.tell_node -row 1 -column 0 -rowspan 1 -columnspan 2 -sticky w
+grid $top.r.top.tell_parent -row 2 -column 0 -rowspan 1 -columnspan 2 -sticky w
+grid $top.r.top.tell_children -row 3 -column 0 -rowspan 1 -columnspan 2 -sticky w
+
+grid $top.r.middle.otherkeys -row 0 -column 0
+grid $top.r.middle.s -row 0 -column 1
+
+grid $top.r.bottom.text -row 0 -column 0
+grid $top.r.bottom.s -row 0 -column 1
+
+
+-- Massaging --
+
+toplevel .editor
+ttk::frame .editor.l
+ttk::treeview .editor.l.tree -selectmode browse -yscrollcommand ".editor.l.s set"
+ttk::scrollbar .editor.l.s -orient vertical -command ".editor.l.tree yview"
+ttk::frame .editor.r
+ttk::frame .editor.r.top
+ttk::label .editor.r.top.title_lbl -text "title:"
+ttk::entry .editor.r.top.ttl -width 80
+ttk::label .editor.r.top.tell_node -text "node: n343"
+ttk::label .editor.r.top.tell_parent -text "parent: n310"
+ttk::label .editor.r.top.tell_children -text "children: n334 n385 n100"
+ttk::frame .editor.r.middle
+ttk::treeview .editor.r.middle.otherkeys -selectmode browse -yscrollcommand ".editor.r.middle.s set"
+ttk::scrollbar .editor.r.middle.s -orient vertical -command ".editor.r.middle.otherkeys yview"
+ttk::frame .editor.r.bottom
+tk::text .editor.r.bottom.text -width 80 -height 40 -yscrollcommand ".editor.r.bottom.s set"
+ttk::scrollbar .editor.r.bottom.s -orient vertical -command ".editor.r.bottom.text yview"
+
+grid .editor
+
+grid .editor.l -row 0 -column 0
+grid .editor.r -row 0 -column 1
+
+grid .editor.l.tree -row 0 -column 0 -sticky nsew
+grid .editor.l.s -row 0 -column 1 -sticky nsw
+
+grid .editor.r.top -row 0 -column 0 -sticky we
+grid .editor.r.middle -row 1 -column 0 -sticky w
+grid .editor.r.bottom -row 2 -column 0 -sticky w
+
+grid .editor.r.top.title_lbl -row 0 -column 0 -sticky w
+grid .editor.r.top.ttl -row 0 -column 1
+grid .editor.r.top.tell_node -row 1 -column 0 -rowspan 1 -columnspan 2 -sticky w
+grid .editor.r.top.tell_parent -row 2 -column 0 -rowspan 1 -columnspan 2 -sticky w
+grid .editor.r.top.tell_children -row 3 -column 0 -rowspan 1 -columnspan 2 -sticky w
+
+grid .editor.r.middle.otherkeys -row 0 -column 0
+grid .editor.r.middle.s -row 0 -column 1
+
+grid .editor.r.bottom.text -row 0 -column 0
+grid .editor.r.bottom.s -row 0 -column 1
+
+
+grid rowconfigure .editor 0 -weight 1
+grid columnconfigure .editor 0 -weight 0
+grid columnconfigure .editor 1 -weight 1
+
+grid rowconfigure .editor.l 0 -weight 1
+grid columnconfigure .editor.l 0 -weight 1
+grid columnconfigure .editor.l 1 -weight 0
+
+grid rowconfigure .editor.r 0 -weight 0
+grid rowconfigure .editor.r 1 -weight 0
+grid rowconfigure .editor.r 2 -weight 1
+grid columnconfigure .editor.r 0 -weight 1
+
