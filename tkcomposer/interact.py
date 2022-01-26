@@ -118,8 +118,14 @@ $lbox insert 2 {third}
 """
 
 txt_tree = """
-ttk::treeview $top.f.tree -height 6 -yscrollcommand "$top.f.s set"
+ttk::treeview $top.f.tree -height 6 -yscrollcommand "$top.f.s set" -columns "col1"
 grid $top.f.tree -row 2 -column 0 -columnspan 2 -sticky nsew
+
+$top.f.tree column #0 -width 100
+$top.f.tree heading #0 -text "Column #0"
+
+$top.f.tree column col1 -width 150
+$top.f.tree heading col1 -text "Column col1"
 
 ttk::scrollbar $top.f.s -orient vertical -command "$top.f.tree yview"
 grid $top.f.s -row 2 -column 3 -sticky nsew
